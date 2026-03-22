@@ -30,9 +30,6 @@ jobs:
           permission-organization-secrets: write
           permission-organization-packages: write
           owner: ${{ github.repository_owner }}
-          repositories: |
-            ${{ secrets.AUR_DB_REPO_NAME }}
-            ${{ secrets.AUR_PKGBUILDS_REPO_NAME }}
 
       - name: New Key
         id: new_key
