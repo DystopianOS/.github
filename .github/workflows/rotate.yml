@@ -35,7 +35,7 @@ jobs:
         env:
           KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
           BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
-          SHORT_KEY_NAME: "#${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}#"
+          SHORT_KEY_NAME: "###${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}###"
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(${KEY_NAME} ${BKP_NAME})
@@ -44,11 +44,13 @@ jobs:
             [ -z "$keyname" ] && continue
             [[ "$keyname" =~ ^\#.*\#$ ]] && l=32
             </dev/urandom tr -dc '[:graph:]' 2>/dev/null | head -c ${l:-64} 2>/dev/null | \
-              gh secret set DAILY_RANDOM_KEY \
+              gh secret set "$keyname" \
                         --org ${{ github.repository_owner }} \
                         --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
-                        --visibility selected || {
+                        --visibility "selected" || {
                 echo "::error::Failed to set new key as secret" >&2
                 exit 1
               }
           done <<< "${KEY_NAMES[@]}"
+          
+          echo "New key(s) set successfully: ${KEY_NAMES[*]}"
