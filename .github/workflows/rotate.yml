@@ -43,7 +43,7 @@ jobs:
           while LFS= read -r keyname; do
             [ -z "$keyname" ] && continue
             [[ "$keyname" =~ ^\#.*\#$ ]] && l=32
-            </dev/urandom tr -dc '[:graph:]' 2>/dev/null | head -c ${l:-64}; printf '%s' | \
+            tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' </dev/urandom | head -c 128; printf '%s' | \
               gh secret set DAILY_RANDOM_KEY \
                         --org ${{ github.repository_owner }} \
                         --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
