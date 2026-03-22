@@ -42,7 +42,7 @@ jobs:
 
           while LFS= read -r keyname; do
             [ -z "$keyname" ] && continue
-            [[ "$keyname" =~ ^\#.*\#$ ]] && l=32
+            [[ "$keyname" =~ ^\#.*\#$ ]] && { keyname=$(printf '%s' "$keyname" | sed -e 's/\#\#\#//g') & l=32 ;} || continue  
             </dev/urandom tr -dc '[:graph:]' 2>/dev/null | head -c ${l:-64} 2>/dev/null | \
               gh secret set "$keyname" \
                         --org ${{ github.repository_owner }} \
