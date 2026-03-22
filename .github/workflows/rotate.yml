@@ -10,7 +10,7 @@ on:
         default: "DAILY_RANDOM_KEY0"
         type: string
   schedule:
-    - cron: '${{ secrets.KEY_ROTATION_CRON }}'
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
 
 jobs:
   rotate:
@@ -57,4 +57,3 @@ jobs:
                 exit 1
               }
           done <<< "${KEY_NAMES[@]}"
-      
