@@ -10,6 +10,6 @@ We create open-source software that empowers individuals against centralized con
 
 ## Public PGP Key
 
-🔑 **[Download ASCII Public Key](../gnupg/pubkey.asc)**  
-💾 **[Download Binary Public Key](../gnupg/pubkey.gpg)**
+🔑 **[Download ASCII Public Key](https://raw.githubusercontent.com/DystopianOS/.github/refs/heads/main/profile/gnupg/public.asc)**  
+💾 **[Download Binary Public Key](https://raw.githubusercontent.com/DystopianOS/.github/refs/heads/main/profile/gnupg/public.gpg)**
 
