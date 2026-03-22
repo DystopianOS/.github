@@ -51,7 +51,8 @@ jobs:
             printf '%s' "$(</dev/urandom tr -dc '[:graph:]' | head -c ${l:-64} ; echo)" | \
               gh secret set DAILY_RANDOM_KEY \
                         --org ${{ github.repository_owner }} \
-                        --visibility all || {
+                        --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
+                        --visibility selected || {
                 echo "::error::Failed to set new key as secret" >&2
                 exit 1
               }
