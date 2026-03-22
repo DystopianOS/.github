@@ -7,7 +7,7 @@ on:
       key_name:
         description: "Name of the key to rotate (optional, defaults to DAILY_RANDOM_KEY)"
         required: false
-        default: "DAILY_RANDOM_KEY0"
+        default: "DAILY_RANDOM_KEY1"
         type: string
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight UTC
@@ -33,12 +33,12 @@ jobs:
         id: new_key
         shell: bash
         env:
-          KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
-          BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
-          SHORT_KEY_NAME: "###${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}###"
+          KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX || 'XXX') }}"
+          BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX || 'XXX') }}"
+          SHORT_KEY_NAME: "###${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX || 'XXX') }}###"
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          KEY_NAMES=(${KEY_NAME} ${BKP_NAME})
+          KEY_NAMES=(${KEY_NAME} ${BKP_NAME} ${SHORT_KEY_NAME})
 
           while LFS= read -r keyname; do
             [ -z "$keyname" ] && continue
