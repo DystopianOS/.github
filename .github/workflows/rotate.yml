@@ -31,7 +31,6 @@ jobs:
           permission-organization-packages: write
           owner: ${{ github.repository_owner }}
           repositories: |
-            ${{ github.repository }}
             ${{ secrets.AUR_DB_REPO_NAME }}
             ${{ secrets.AUR_PKGBUILDS_REPO_NAME }}
 
