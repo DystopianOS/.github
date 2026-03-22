@@ -1,0 +1,56 @@
+name: "Rotate Keys 2"
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      key_name:
+        description: "Name of the key to rotate (optional, defaults to DAILY_RANDOM_KEY)"
+        required: false
+        default: "RANDOM_KEY"
+        type: string
+  schedule:
+    - cron: '*/10 * * * *'
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Create GitHub App Token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
+          private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
+          permission-secrets: write
+          permission-organization-secrets: write
+          owner: ${{ github.repository_owner }}
+
+      - name: New Key
+        id: new_key
+        shell: bash
+        env:
+          KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX || 'XXX') }}"
+          BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX || 'XXX') }}"
+          SHORT_KEY_NAME: "###${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX || 'XXX') }}###"
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          KEY_NAMES=(${KEY_NAME} ${BKP_NAME} ${SHORT_KEY_NAME})
+
+          while LFS= read -r keyname; do
+            [ -z "$keyname" ] && continue
+            [[ "$keyname" =~ ^\#.*\#$ ]] && { keyname=$(printf '%s' "$keyname" | sed -e 's/\#\#\#//g') && l=32 ;} || continue  
+            </dev/urandom tr -dc '[:graph:]' 2>/dev/null | head -c ${l:-64} 2>/dev/null | \
+              gh secret set "$keyname" \
+                        --org ${{ github.repository_owner }} \
+                        --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
+                        --visibility "selected" || {
+                echo "::error::Failed to set new key as secret" >&2
+                exit 1
+              }
+          done <<< "${KEY_NAMES[@]}"
+          
+          echo "New key(s) set successfully: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
