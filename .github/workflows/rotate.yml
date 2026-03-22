@@ -36,6 +36,7 @@ jobs:
           KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
           BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
           SHORT_KEY_NAME: "#${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}#"
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(${KEY_NAME} ${BKP_NAME})
 
