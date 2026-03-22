@@ -7,7 +7,7 @@ on:
       key_name:
         description: "Name of the key to rotate (optional, defaults to DAILY_RANDOM_KEY)"
         required: false
-        default: "DAILY_RANDOM_KEY1"
+        default: "RANDOM_KEY"
         type: string
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight UTC
@@ -53,4 +53,4 @@ jobs:
               }
           done <<< "${KEY_NAMES[@]}"
           
-          echo "New key(s) set successfully: ${KEY_NAMES[*]}"
+          echo "New key(s) set successfully: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
