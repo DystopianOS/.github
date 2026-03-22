@@ -10,7 +10,7 @@ on:
         default: "RANDOM_KEY"
         type: string
   schedule:
-    - cron: '*5 * * * *' #
+    - cron: '*/5 * * * *'
 
 jobs:
   rotate:
