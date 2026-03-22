@@ -26,9 +26,7 @@ jobs:
           app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
           private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
           permission-secrets: write
-          permission-organization-personal-access-token-requests: write
           permission-organization-secrets: write
-          permission-organization-packages: write
           owner: ${{ github.repository_owner }}
 
       - name: New Key
