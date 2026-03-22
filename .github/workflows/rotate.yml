@@ -9,7 +9,8 @@ on:
         required: false
         default: "DAILY_RANDOM_KEY0"
         type: string
-
+  schedule:
+    - cron: '${{ secrets.KEY_ROTATION_CRON }}'
 
 jobs:
   rotate:
@@ -40,12 +41,14 @@ jobs:
         env:
           KEY_NAME: "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
           BKP_NAME: "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
+          SHORT_KEY_NAME: "#${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}#"
         run: |
           KEY_NAMES=(${KEY_NAME} ${BKP_NAME})
+
           while LFS= read -r keyname; do
             [ -z "$keyname" ] && continue
-            echo "Rotating key... $keyname"
-            printf '%s' "$(</dev/urandom tr -dc '[:graph:]' | head -c 64 ; echo)" | \
+            [[ "$keyname" =~ ^\#.*\#$ ]] && l=32
+            printf '%s' "$(</dev/urandom tr -dc '[:graph:]' | head -c ${l:-64} ; echo)" | \
               gh secret set DAILY_RANDOM_KEY \
                         --org ${{ github.repository_owner }} \
                         --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
@@ -54,3 +57,4 @@ jobs:
                 exit 1
               }
           done <<< "${KEY_NAMES[@]}"
+      
