@@ -7,3 +7,9 @@ We create open-source software that empowers individuals against centralized con
 ## Core Principles
 - **Minimalist & hardened** — less surface area for exploits.
 - **Audit-friendly** — readable code > clever code.
+
+## Public PGP Key
+
+🔑 **[Download ASCII Public Key](../gnupg/pubkey.asc)**  
+💾 **[Download Binary Public Key](../gnupg/pubkey.gpg)**
+
