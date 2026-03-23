@@ -21,6 +21,7 @@ jobs:
           app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
           private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
           permission-secrets: write
+          permission-environments: write
           permission-organization-secrets: write
           owner: ${{ github.repository_owner }}
 
@@ -65,6 +66,7 @@ jobs:
           app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
           private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
           permission-secrets: write
+          permission-environments: write
           permission-organization-secrets: write
           owner: ${{ github.repository_owner }}
 
