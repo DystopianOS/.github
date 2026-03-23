@@ -6,15 +6,12 @@ on:
   schedule:
     - cron: '3 22 * * *' # Every day at 3:22 AM UTC
 
-
 jobs:
   rotate-suffix:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       actions: write
-    outputs:
-      old_suffix: ${{ steps.old_suffix.outputs.oldsuffix }}
     steps:
       - name: Create GitHub App Token
         id: app_token
@@ -32,27 +29,21 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          printf '%s' "${{ secrets.KEY_SUFFIX }}" | gh secret set "KEY_SUFFIX_OLD" \
-                      --org "${{ github.repository_owner }}" \
-                      --repos "${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }}" \
-                      --visibility "selected" || {
+          printf '%s' "${{ secrets.KEY_SUFFIX }}" | gh secret set "KEY_SUFFIX_OLD" --env "experimental" || {
             echo "::error::Failed to set new key as secret" >&2
             exit 1
           }
 
       - name: Update Key Suffix
         id: update_suffix
+        if: steps.old_suffix.outputs.oldsuffix != '' && steps.old_suffix.outputs.oldsuffix != 'null'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          openssl rand -base64 128 | tr -d '/+=' | head -c 8 | \
-            gh secret set "KEY_SUFFIX" \
-                      --org "${{ github.repository_owner }}" \
-                      --repos "${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }}" \
-                      --visibility "selected" || {
-              echo "::error::Failed to set KEY_SUFFIX secret" >&2
-              exit 1
+          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | gh secret set "KEY_SUFFIX" --env "experimental" || {
+            echo "::error::Failed to set KEY_SUFFIX secret" >&2
+            exit 1
           }
 
   rotate:
@@ -72,8 +63,28 @@ jobs:
           permission-organization-secrets: write
           owner: ${{ github.repository_owner }}
 
+      - name: Backup Old Key
+        id: backup_old_key
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          RK0="RANDOM_KEY_${{ secrets.KEY_SUFFIX_OLD }}0"
+          RK1="${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
+          RK2="${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
+          if printf '%s\n' ${{ secrets.BACKUP_KEYS }} "$RK0" "$RK1" "$RK2" | \
+            gh secret set "BACKUP_KEYS" --env "experimental" || {
+              echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
+          }; then
+            echo "Old key(s) backed up successfully: $RK0 $RK1 $RK2"
+            echo "success=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No old keys to backup or backup failed"
+          fi
+
       - name: New Key
         id: new_key
+        if: steps.backup_old_key.outputs.success == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
@@ -103,26 +114,21 @@ jobs:
           
           echo "success=true" >> "$GITHUB_OUTPUT"
           echo "New key(s) set successfully: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
-          
 
-      - name: Delete Old Key
-        id: delete_old_key
-        if: needs.rotate-suffix.outputs.old_suffix.length > 0 &&
-            steps.new_key.outputs.success == 'true'
+      - name: Delete Old Keys
+        id: delete_old_keys
+        if: steps.new_key.outputs.success == 'true' && steps.backup_old_key.outputs.success == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
-          OLD_SUFFIX: ${{ needs.rotate-suffix.outputs.old_suffix }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
+            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
           )
 
           printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
-            [ -z "$keyname" ] && continue
-            [[ "$keyname" =~ ^\#\#\#.*\#\#\#$ ]] && keyname=$(printf '%s' "$keyname" | sed -e 's/\#\#\#//g')
             gh secret delete "$keyname" --org "${{ github.repository_owner }}" || {
               echo "::error::Failed to delete old key '$keyname'" >&2
               exit 1
