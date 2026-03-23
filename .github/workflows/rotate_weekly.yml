@@ -42,7 +42,7 @@ jobs:
 
       - name: Update Key Suffix
         id: update_suffix
-        if: steps.old_suffix.outputs.oldsuffix != '' && steps.old_suffix.outputs.oldsuffix != 'null'
+        if: steps.old_suffix.outcome.status == 'success'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
