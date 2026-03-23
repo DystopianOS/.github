@@ -32,7 +32,13 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          echo "oldsuffix=${{ secrets.KEY_SUFFIX || 'XXX' }}" >> "$GITHUB_OUTPUT"
+          printf '%s' "${{ secrets.KEY_SUFFIX }}" | gh secret set "KEY_SUFFIX_OLD" \
+                      --org "${{ github.repository_owner }}" \
+                      --repos "${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }}" \
+                      --visibility "selected" || {
+            echo "::error::Failed to set new key as secret" >&2
+            exit 1
+          }
 
       - name: Update Key Suffix
         id: update_suffix
