@@ -109,9 +109,9 @@ jobs:
           OLD_SUFFIX: ${{ needs.rotate-suffix.outputs.old_suffix }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', OLD_SUFFIX) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', OLD_SUFFIX) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', OLD_SUFFIX) }}"
+            "${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
           )
 
           printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
