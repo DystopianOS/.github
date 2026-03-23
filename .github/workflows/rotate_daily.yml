@@ -127,7 +127,15 @@ jobs:
             "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
             "${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
           )
-
+          
+          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_" | wc -c)
+          if [[ $len -gt 3 ]]; then
+            echo "Old key(s) found for deletion: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
+          else
+            echo "No old keys found for deletion, they may have already been deleted or never existed"
+            exit 0
+          fi
+          
           printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
             gh secret delete "$keyname" --org "${{ github.repository_owner }}" || {
               echo "::error::Failed to delete old key '$keyname'" >&2
