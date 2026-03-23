@@ -70,9 +70,9 @@ jobs:
             "###${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX || 'XXX') }}###"
           )
 
-          while LFS= read -r keyname; do
+          printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
             [ -z "$keyname" ] && continue
-            [[ ! "$keyname" =~ ^\#\#\#.*\#\#\#$ ]] && continue || { keyname=$(printf '%s' "$keyname" | sed -e 's/\#\#\#//g') && l=32 ;}
+            [[ "$keyname" =~ ^\#\#\#.*\#\#\#$ ]] && { keyname=$(printf '%s' "$keyname" | sed -e 's/\#\#\#//g') && l=32 ;} 
             openssl rand -base64 128 | tr -d '/+=' | head -c ${l:-64} | \
               gh secret set "$keyname" \
                         --org "${{ github.repository_owner }}" \
@@ -81,6 +81,6 @@ jobs:
                 echo "::error::Failed to set new key as secret" >&2
                 exit 1
               }
-          done <<< "${KEY_NAMES[@]}"
+          done
           
           echo "New key(s) set successfully: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
