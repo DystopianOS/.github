@@ -1,4 +1,4 @@
-name: "Rotate Keys 3"
+name: "Rotate Keys 2"
 
 
 on:
@@ -10,7 +10,7 @@ on:
         default: "RANDOM_KEY"
         type: string
   schedule:
-    - cron: '* 1 * * *' #
+    - cron: '22 3 * * 2' # Every Tuesday at 3:22 AM UTC
 
 jobs:
   rotate:
