@@ -26,9 +26,7 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          repository: ${{ github.repository }}
           token: ${{ steps.app_token.outputs.token }}
-          ref: main
 
       - name: Set Old Suffix
         id: old_suffix
@@ -36,7 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          printf '%s' "${{ secrets.KEY_SUFFIX }}" | gh secret set "KEY_SUFFIX_OLD" --env "experimental" || {
+          printf '%s' "${{ secrets.KEY_SUFFIX || 'XXX' }}" | gh secret set "KEY_SUFFIX_OLD" --env "experimental" || {
             echo "::error::Failed to set new key as secret" >&2
             exit 1
           }
@@ -72,9 +70,7 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          repository: ${{ github.repository }}
           token: ${{ steps.app_token.outputs.token }}
-          ref: main
 
       - name: Backup Old Key
         id: backup_old_key
