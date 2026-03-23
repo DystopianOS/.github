@@ -41,6 +41,7 @@ jobs:
 
   rotate:
     runs-on: ubuntu-latest
+    needs: rotate-suffix
     permissions:
       contents: write
       actions: write
