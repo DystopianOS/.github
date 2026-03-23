@@ -24,6 +24,12 @@ jobs:
           permission-organization-secrets: write
           owner: ${{ github.repository_owner }}
 
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ steps.app_token.outputs.token }}
+          ref: main
+
       - name: Set Old Suffix
         id: old_suffix
         shell: bash
@@ -63,6 +69,12 @@ jobs:
           permission-secrets: write
           permission-organization-secrets: write
           owner: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ steps.app_token.outputs.token }}
+          ref: main
 
       - name: Backup Old Key
         id: backup_old_key
