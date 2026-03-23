@@ -1,16 +1,10 @@
-name: "Rotate Keys Daily"
+name: "Rotate Daily"
 
 
 on:
-  workflow_dispatch:
-    inputs:
-      key_name:
-        description: "Name of the key to rotate (optional, defaults to RANDOM_KEY)"
-        required: false
-        default: "RANDOM_KEY"
-        type: string
   schedule:
     - cron: '3 22 * * *' # Every day at 3:22 AM UTC
+
 
 jobs:
   rotate-suffix:
