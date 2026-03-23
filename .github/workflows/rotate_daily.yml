@@ -35,7 +35,7 @@ jobs:
           openssl rand -base64 128 | tr -d '/+=' | head -c 8 | \
             gh secret set "KEY_SUFFIX" \
                       --org ${{ github.repository_owner }} \
-                      --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
+                      --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} \
                       --visibility "selected" || {
               echo "::error::Failed to set KEY_SUFFIX secret" >&2
               exit 1
@@ -76,7 +76,7 @@ jobs:
             openssl rand -base64 128 | tr -d '/+=' | head -c ${l:-64} | \
               gh secret set "$keyname" \
                         --org ${{ github.repository_owner }} \
-                        --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} 
+                        --repos ${{ github.repository }},${{ secrets.AUR_DB_REPO_NAME }},${{ secrets.AUR_PKGBUILDS_REPO_NAME }} \
                         --visibility "selected" || {
                 echo "::error::Failed to set new key as secret" >&2
                 exit 1
