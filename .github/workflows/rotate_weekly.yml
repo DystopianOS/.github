@@ -82,10 +82,10 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          RK0="${{ format('RANDOM_KEY_WEEKLY_{0}0', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-          RK1="${{ format('RANDOM_KEY_WEEKLY_{0}1', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-          RK2="${{ format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-          if printf '%s\n' "${{ secrets.BACKUP_KEYS_WEEKLY }}" "$RK0" "$RK1" "$RK2" | \
+          if printf '%s\n' "${{ secrets.BACKUP_KEYS_WEEKLY }}" \
+              "${{ format('RANDOM_KEY_WEEKLY_{0}0', secrets.KEY_SUFFIX_WEEKLY_OLD) }}" \
+              "${{ format('RANDOM_KEY_WEEKLY_{0}1', secrets.KEY_SUFFIX_WEEKLY_OLD) }}" \
+              "${{ format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}" | \
             gh secret set "BACKUP_KEYS_WEEKLY" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
           }; then
@@ -138,8 +138,8 @@ jobs:
         run: |
           KEY_NAMES=(
             "${{ format('RANDOM_KEY_WEEKLY_{0}0', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_WEEKLY_{0}1', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
+            "${{ format('RANDOM_KEY_WEEKLY_{0}1', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
+            "${{ format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
           )
           
           len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_WEEKLY_[A-Z0-9]{8}[012]$" | wc -c)
