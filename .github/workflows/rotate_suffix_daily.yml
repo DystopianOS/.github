@@ -54,5 +54,3 @@ jobs:
               echo "::error::Failed to set KEY_SUFFIX secret" >&2
               exit 1
           }
-  rotate:
-    
