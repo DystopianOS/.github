@@ -50,9 +50,10 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | gh secret set "KEY_SUFFIX_WEEKLY" --env "experimental" || {
-            echo "::error::Failed to set KEY_SUFFIX_WEEKLY secret" >&2
-            exit 1
+          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | \
+            gh secret set "KEY_SUFFIX_WEEKLY" --env "experimental" || {
+              echo "::error::Failed to set KEY_SUFFIX_WEEKLY secret" >&2
+              exit 1
           }
 
   rotate:
@@ -120,7 +121,7 @@ jobs:
             }
           done
           
-          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_WEEKLY_[a-zA-Z0-9]{7}[012]$" || {
+          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_WEEKLY_[A-Z0-9]{8}[012]$" || {
             echo "::error::Failed to verify new key creation" >&2
             exit 1
           }
@@ -141,7 +142,7 @@ jobs:
             "${{ inputs.key_name || format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
           )
           
-          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_WEEKLY_" | wc -c)
+          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_WEEKLY_[A-Z0-9]{8}[012]$" | wc -c)
           if [[ $len -gt 3 ]]; then
             echo "Old key(s) found for deletion: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
           else
