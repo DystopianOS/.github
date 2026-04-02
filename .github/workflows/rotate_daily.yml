@@ -139,7 +139,7 @@ jobs:
             "${{ inputs.key_name || format('RANDOM_KEY_DAILY_{0}2', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           )
           
-          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY" | wc -c)
+          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY_[a-zA-Z0-9]{8}[012]$" | wc -c)
           if [[ $len -gt 3 ]]; then
             echo "Old key(s) found for deletion: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
           else
