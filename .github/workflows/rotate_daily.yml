@@ -118,7 +118,7 @@ jobs:
                 exit 1
             }
           done
-          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_[a-zA-Z0-9]{7}[012]$" || {
+          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_[a-zA-Z0-9]{8}[012]$" || {
             echo "::error::Failed to verify new key creation" >&2
             exit 1
           }
