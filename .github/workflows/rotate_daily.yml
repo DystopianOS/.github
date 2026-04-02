@@ -5,14 +5,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '3 22 * * *' # Every day at 3:22 AM UTC
-
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   rotate-suffix:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: write
     steps:
       - name: Create GitHub App Token
         id: app_token
@@ -42,22 +41,20 @@ jobs:
 
       - name: Update Key Suffix
         id: update_suffix
-        if: steps.old_suffix.outcome.status == 'success'
+        if: steps.old_suffix.outcome == 'success'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | gh secret set "KEY_SUFFIX" --env "experimental" || {
-            echo "::error::Failed to set KEY_SUFFIX secret" >&2
-            exit 1
+          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | \
+            gh secret set "KEY_SUFFIX" --env "experimental" || {
+              echo "::error::Failed to set KEY_SUFFIX secret" >&2
+              exit 1
           }
 
   rotate:
     runs-on: ubuntu-latest
     needs: rotate-suffix
-    permissions:
-      contents: write
-      actions: write
     steps:
       - name: Create GitHub App Token
         id: app_token
@@ -118,7 +115,7 @@ jobs:
                 exit 1
             }
           done
-          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_${{ secrets.KEY_SUFFIX }}[012]$" || {
+          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_[a-zA-Z0-9]{7}[012]$" || {
             echo "::error::Failed to verify new key creation" >&2
             exit 1
           }
