@@ -1,63 +1,19 @@
 name: "Rotate Daily"
 
-
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '3 22 * * *' # Every day at 3:22 AM UTC
+  workflow_run:
+    workflows:
+      - "Rotate Key Suffix"
+    types:
+      - completed
+
 permissions:
   contents: write
   actions: write
 
 jobs:
-  rotate-suffix:
-    runs-on: ubuntu-latest
-    outputs:
-      old_suffix: ${{ steps.old_suffix.outputs.old_suffix }}
-    steps:
-      - name: Create GitHub App Token
-        id: app_token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
-          private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
-          permission-secrets: write
-          permission-environments: write
-          permission-organization-secrets: write
-          owner: ${{ github.repository_owner }}
-
-      - uses: actions/checkout@v6
-        with:
-          token: ${{ steps.app_token.outputs.token }}
-
-      - name: Set Old Suffix
-        id: old_suffix
-        shell: bash
-        env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token }}
-        run: |
-          printf '%s' "${{ vars.KEY_SUFFIX || 'XXXXXXXX' }}" | gh variable set "KEY_SUFFIX_OLD" --env "experimental" || {
-            echo "::error::Failed to set new key as secret" >&2
-            exit 1
-          }
-          echo "old_suffix=${{ vars.KEY_SUFFIX_OLD }}" >> "$GITHUB_OUTPUT"
-
-      - name: Update Key Suffix
-        id: update_suffix
-        if: steps.old_suffix.outcome == 'success'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token }}
-        run: |
-          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | \
-            gh variable set "KEY_SUFFIX" --env "experimental" || {
-              echo "::error::Failed to set KEY_SUFFIX secret" >&2
-              exit 1
-          }
-
   rotate:
     runs-on: ubuntu-latest
-    needs: rotate-suffix
     steps:
       - name: Create GitHub App Token
         id: app_token
@@ -80,10 +36,18 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          echo "${{needs.rotate-suffix.outputs.old_suffix}}"
-          RK0="${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
-          RK1="${{ format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
-          RK2="${{ format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
+          if [[ -z "${{ secrets.KEY_SUFFIX }}" ]]; then
+            echo "::error::KEY_SUFFIX secret is not set or is empty" >&2
+            exit 1
+          fi
+          if [[ -z "${{ secrets.KEY_SUFFIX_OLD }}" ]]; then
+            echo "::error::KEY_SUFFIX_OLD secret is not set or is empty" >&2
+            exit 1
+          fi
+          
+          RK0="${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
+          RK1="${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
+          RK2="${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
           if printf '%s\n' ${{ secrets.BACKUP_KEYS }} "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
@@ -101,16 +65,11 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          test="$(gh variable get "KEY_SUFFIX" --env "experimental")"
-          test2="$(gh variable get "KEY_SUFFIX_OLD" --env "experimental")"
-          echo "$test"
-          echo "$test2"
-          echo "${{ needs.rotate-suffix.outputs.old_suffix }}"
-          
+
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
-            "${{ format('RANDOM_KEY_{0}1', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
-            "${{ format('RANDOM_KEY_{0}2', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
+            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
+            "${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
+            "${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}"
           )
 
           printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
@@ -141,9 +100,9 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', vars.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', vars.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', vars.KEY_SUFFIX_OLD) }}"
+            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
           )
           
           len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_" | wc -c)

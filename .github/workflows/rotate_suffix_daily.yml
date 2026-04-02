@@ -1,0 +1,58 @@
+name: "Rotate Key Suffix"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '22 3 * * 2' # Every Tuesday at 3:22 AM UTC
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  rotate-suffix:
+    runs-on: ubuntu-latest
+    outputs:
+      old_suffix: ${{ steps.old_suffix.outputs.old_suffix }}
+    steps:
+      - name: Create GitHub App Token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DYSTOPIANBOT_APP_ID }}
+          private-key: ${{ secrets.DYSTOPIANBOT_KEY }}
+          permission-secrets: write
+          permission-environments: write
+          permission-organization-secrets: write
+          owner: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Set Old Suffix
+        id: old_suffix
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          printf '%s' "${{ secrets.KEY_SUFFIX }}" | gh secret set "KEY_SUFFIX_OLD" --env "experimental" || {
+            echo "::error::Failed to set new key suffix" >&2
+            exit 1
+          }
+          echo "old_suffix=${{ secrets.KEY_SUFFIX }}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Key Suffix
+        id: update_suffix
+        if: steps.old_suffix.outcome == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | \
+            gh secret set "KEY_SUFFIX" --env "experimental" || {
+              echo "::error::Failed to set KEY_SUFFIX secret" >&2
+              exit 1
+          }
+  rotate:
+    
