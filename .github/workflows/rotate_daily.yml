@@ -40,7 +40,7 @@ jobs:
             echo "::error::Failed to set new key as secret" >&2
             exit 1
           }
-          echo "old_suffix=${{ vars.KEY_SUFFIX }}" >> "$GITHUB_OUTPUT"
+          echo "old_suffix=${{ vars.KEY_SUFFIX_OLD }}" >> "$GITHUB_OUTPUT"
 
       - name: Update Key Suffix
         id: update_suffix
