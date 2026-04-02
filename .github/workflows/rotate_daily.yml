@@ -80,6 +80,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
+          echo "${{needs.rotate-suffix.outputs.old_suffix}}"
           RK0="${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
           RK1="${{ format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
           RK2="${{ format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
@@ -100,8 +101,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          echo "${{vars.KEY_SUFFIX}}"
-          echo "${{vars.KEY_SUFFIX_OLD}}"
+          echo "$(gh variable get "KEY_SUFFIX" --env "experimental")"
+          echo "$(gh variable get "KEY_SUFFIX_OLD" --env "experimental")"
+          echo "${{ needs.rotate-suffix.outputs.old_suffix }}"
           
           KEY_NAMES=(
             "${{ format('RANDOM_KEY_{0}0', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
