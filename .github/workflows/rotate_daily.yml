@@ -12,6 +12,8 @@ permissions:
 jobs:
   rotate-suffix:
     runs-on: ubuntu-latest
+    outputs:
+      old_suffix: ${{ steps.old_suffix.outputs.old_suffix }}
     steps:
       - name: Create GitHub App Token
         id: app_token
@@ -38,6 +40,7 @@ jobs:
             echo "::error::Failed to set new key as secret" >&2
             exit 1
           }
+          echo "old_suffix=${{ secrets.KEY_SUFFIX }}" >> "$GITHUB_OUTPUT"
 
       - name: Update Key Suffix
         id: update_suffix
@@ -77,9 +80,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          RK0="${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
-          RK1="${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
-          RK2="${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
+          RK0="${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
+          RK1="${{ format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
+          RK2="${{ format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
           if printf '%s\n' ${{ secrets.BACKUP_KEYS }} "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
@@ -131,9 +134,9 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
           )
           
           len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_" | wc -c)
