@@ -80,9 +80,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          RK0="${{ format('RANDOM_KEY_{0}0', vars.KEY_SUFFIX_OLD) }}"
-          RK1="${{ format('RANDOM_KEY_{0}1', vars.KEY_SUFFIX_OLD) }}"
-          RK2="${{ format('RANDOM_KEY_{0}2', vars.KEY_SUFFIX_OLD) }}"
+          RK0="${{ format('RANDOM_KEY_{0}0', needs.rotate-suffix.outputs.old_suffix) }}"
+          RK1="${{ format('RANDOM_KEY_{0}1', needs.rotate-suffix.outputs.old_suffix) }}"
+          RK2="${{ format('RANDOM_KEY_{0}2', needs.rotate-suffix.outputs.old_suffix) }}"
           if printf '%s\n' ${{ secrets.BACKUP_KEYS }} "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
@@ -100,6 +100,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
+          echo "${{vars.KEY_SUFFIX}}"
+          echo "${{vars.KEY_SUFFIX_OLD}}"
+          
           KEY_NAMES=(
             "${{ format('RANDOM_KEY_{0}0', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
             "${{ format('RANDOM_KEY_{0}1', vars.KEY_SUFFIX || 'XXXXXXXX') }}"
