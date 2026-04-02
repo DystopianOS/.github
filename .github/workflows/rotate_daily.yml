@@ -6,9 +6,11 @@ on:
   schedule:
     - cron: '3 22 * * *' # Every day at 3:22 AM UTC
 
+
 permissions:
   contents: write
   actions: write
+
 
 jobs:
   rotate-suffix:
@@ -36,9 +38,10 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          printf '%s' "${{ secrets.KEY_SUFFIX_DAILY || 'XXXXXXXX' }}" | gh secret set "KEY_SUFFIX_DAILY_OLD" --env "experimental" || {
-            echo "::error::Failed to set new daily KEY_SUFFIX as secret" >&2
-            exit 1
+          printf '%s' "${{ secrets.KEY_SUFFIX_DAILY || 'XXXXXXXX' }}" | \
+            gh secret set "KEY_SUFFIX_DAILY_OLD" --env "experimental" || {
+              echo "::error::Failed to set new daily KEY_SUFFIX as secret" >&2
+              exit 1
           }
 
       - name: Update Key Suffix
@@ -83,7 +86,7 @@ jobs:
           RK0="${{ format('RANDOM_KEY_DAILY_{0}0', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           RK1="${{ format('RANDOM_KEY_DAILY_{0}1', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           RK2="${{ format('RANDOM_KEY_DAILY_{0}2', secrets.KEY_SUFFIX_DAILY_OLD) }}"
-          if printf '%s\n' ${{ secrets.BACKUP_KEYS_DAILY }} "$RK0" "$RK1" "$RK2" | \
+          if printf '%s\n' "${{ secrets.BACKUP_KEYS_DAILY }}" "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS_DAILY" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
           }; then
@@ -118,6 +121,7 @@ jobs:
                 exit 1
             }
           done
+          
           gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY_[a-zA-Z0-9]{8}[012]$" || {
             echo "::error::Failed to verify new key creation" >&2
             exit 1
@@ -139,7 +143,9 @@ jobs:
             "${{ inputs.key_name || format('RANDOM_KEY_DAILY_{0}2', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           )
           
-          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY_[a-zA-Z0-9]{8}[012]$" | wc -c)
+          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | \
+            grep -E "^RANDOM_KEY_DAILY_[a-zA-Z0-9]{8}[012]$" | wc -c)
+          
           if [[ $len -gt 3 ]]; then
             echo "Old key(s) found for deletion: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
           else

@@ -85,7 +85,7 @@ jobs:
           RK0="${{ format('RANDOM_KEY_WEEKLY_{0}0', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
           RK1="${{ format('RANDOM_KEY_WEEKLY_{0}1', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
           RK2="${{ format('RANDOM_KEY_WEEKLY_{0}2', secrets.KEY_SUFFIX_WEEKLY_OLD) }}"
-          if printf '%s\n' ${{ secrets.BACKUP_KEYS_WEEKLY }} "$RK0" "$RK1" "$RK2" | \
+          if printf '%s\n' "${{ secrets.BACKUP_KEYS_WEEKLY }}" "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS_WEEKLY" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
           }; then
