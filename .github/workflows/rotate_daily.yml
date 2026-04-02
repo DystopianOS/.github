@@ -101,8 +101,10 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          echo "$(gh variable get "KEY_SUFFIX" --env "experimental")"
-          echo "$(gh variable get "KEY_SUFFIX_OLD" --env "experimental")"
+          test="$(gh variable get "KEY_SUFFIX" --env "experimental")"
+          test2="$(gh variable get "KEY_SUFFIX_OLD" --env "experimental")"
+          echo "$test"
+          echo "$test2"
           echo "${{ needs.rotate-suffix.outputs.old_suffix }}"
           
           KEY_NAMES=(
