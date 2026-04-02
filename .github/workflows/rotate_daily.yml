@@ -36,7 +36,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          printf '%s' "${{ secrets.KEY_SUFFIX || 'XXXXXXXX' }}" | gh secret set "KEY_SUFFIX_OLD" --env "experimental" || {
+          printf '%s' "${{ secrets.KEY_SUFFIX_DAILY || 'XXXXXXXX' }}" | gh secret set "KEY_SUFFIX_DAILY_OLD" --env "experimental" || {
             echo "::error::Failed to set new key as secret" >&2
             exit 1
           }
@@ -49,8 +49,8 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           openssl rand -base64 128 | tr "[:lower:]" "[:upper:]" | tr -d '/+=' | head -c 8 | \
-            gh secret set "KEY_SUFFIX" --env "experimental" || {
-              echo "::error::Failed to set KEY_SUFFIX secret" >&2
+            gh secret set "KEY_SUFFIX_DAILY" --env "experimental" || {
+              echo "::error::Failed to set KEY_SUFFIX_DAILY secret" >&2
               exit 1
           }
 
@@ -80,9 +80,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          RK0="${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
-          RK1="${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
-          RK2="${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
+          RK0="${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_DAILY_OLD) }}"
+          RK1="${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_DAILY_OLD) }}"
+          RK2="${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           if printf '%s\n' ${{ secrets.BACKUP_KEYS }} "$RK0" "$RK1" "$RK2" | \
             gh secret set "BACKUP_KEYS" --env "experimental" || {
               echo "::warning::Failed to backup old key '$keyname', it may not exist or is already deleted" >&2
@@ -101,9 +101,9 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX) }}"
-            "${{ format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX) }}"
-            "${{ format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX) }}"
+            "${{ format('RANDOM_KEY_DAILY_{0}0', secrets.KEY_SUFFIX_DAILY) }}"
+            "${{ format('RANDOM_KEY_DAILY_{0}1', secrets.KEY_SUFFIX_DAILY) }}"
+            "${{ format('RANDOM_KEY_DAILY_{0}2', secrets.KEY_SUFFIX_DAILY) }}"
           )
 
           printf '%s\n' "${KEY_NAMES[@]}" | while IFS= read -r keyname; do
@@ -118,7 +118,7 @@ jobs:
                 exit 1
             }
           done
-          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_[a-zA-Z0-9]{8}[012]$" || {
+          gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY_[a-zA-Z0-9]{8}[012]$" || {
             echo "::error::Failed to verify new key creation" >&2
             exit 1
           }
@@ -134,12 +134,12 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           KEY_NAMES=(
-            "${{ format('RANDOM_KEY_{0}0', secrets.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}1', secrets.KEY_SUFFIX_OLD) }}"
-            "${{ inputs.key_name || format('RANDOM_KEY_{0}2', secrets.KEY_SUFFIX_OLD) }}"
+            "${{ format('RANDOM_KEY_DAILY_{0}0', secrets.KEY_SUFFIX_DAILY_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_DAILY_{0}1', secrets.KEY_SUFFIX_DAILY_OLD) }}"
+            "${{ inputs.key_name || format('RANDOM_KEY_DAILY_{0}2', secrets.KEY_SUFFIX_DAILY_OLD) }}"
           )
           
-          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_" | wc -c)
+          len=$(gh secret list --org "${{ github.repository_owner }}" | awk -F' ' '{print $1}' | grep -E "^RANDOM_KEY_DAILY" | wc -c)
           if [[ $len -gt 3 ]]; then
             echo "Old key(s) found for deletion: ${KEY_NAMES[*]}" | sed -e 's/\#\#\#//g'
           else
